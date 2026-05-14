@@ -1,3 +1,4 @@
+#All the things you'll need to download before running.
 flask
 joblib
 numpy
