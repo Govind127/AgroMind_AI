@@ -10,11 +10,11 @@ app = Flask(__name__)
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "crop_model.pkl")
 model = joblib.load(MODEL_PATH)
 
-OWM_API_KEY = "4f535c50611950b769c817599a11380e"
+OWM_API_KEY = "Your API key goes right"
 
 
 def get_weather(city: str):
-    if not OWM_API_KEY or OWM_API_KEY == "4f535c50611950b769c817599a11380e":
+    if not OWM_API_KEY or OWM_API_KEY == "Same API key here as well":
         return None, "No API key configured."
     try:
         url = (
