@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AgroMind AI - Crop Intelligence Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,300;0,600;1,300&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #0d1117;
+    --surface:  #161b22;
+    --border:   #21262d;
+    --green:    #3fb950;
+    --green-dim:#1a4a26;
+    --amber:    #d29922;
+    --blue:     #58a6ff;
+    --text:     #e6edf3;
+    --muted:    #7d8590;
+    --font-display: 'Fraunces', Georgia, serif;
+    --font-mono:    'DM Mono', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── GRID NOISE OVERLAY ─────────────────────────────────────────── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(63,185,80,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(63,185,80,.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── LAYOUT ─────────────────────────────────────────────────────── */
+  .shell {
+    position: relative; z-index: 1;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 24px 28px 60px;
+  }
+
+  /* ── HEADER ─────────────────────────────────────────────────────── */
+  header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 18px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .logo {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+  .logo span { color: var(--green); }
+  .badge {
+    font-size: 11px;
+    color: var(--green);
+    border: 1px solid var(--green-dim);
+    background: rgba(63,185,80,.08);
+    padding: 3px 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  /* ── MAIN GRID ──────────────────────────────────────────────────── */
+  .grid-main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  @media(max-width:800px){ .grid-main{ grid-template-columns:1fr; } }
+
+  /* ── CARD ───────────────────────────────────────────────────────── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 24px 26px;
+  }
+  .card-title {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── FORM ELEMENTS ──────────────────────────────────────────────── */
+  .field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .field-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  @media(max-width:500px){
+    .field-grid { grid-template-columns: 1fr 1fr; }
+    .field-grid-2 { grid-template-columns: 1fr; }
+  }
+
+  label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 5px;
+  }
+  input[type=number], input[type=text] {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color .15s;
+  }
+  input[type=number]:focus, input[type=text]:focus {
+    border-color: var(--green);
+  }
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 3px;
+    background: var(--border);
+    outline: none;
+    margin-top: 10px;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    background: var(--green);
+    cursor: pointer;
+  }
+  .range-val {
+    display: inline-block;
+    font-size: 11px;
+    color: var(--green);
+    margin-top: 4px;
+  }
+
+  /* ── BUTTONS ─────────────────────────────────────────────────────── */
+  .btn {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 11px 24px;
+    cursor: pointer;
+    border: none;
+    transition: opacity .15s;
+  }
+  .btn:hover { opacity: .8; }
+  .btn-primary { background: var(--green); color: #0d1117; }
+  .btn-secondary { background: transparent; color: var(--blue); border: 1px solid var(--blue); }
+  .btn-row { display: flex; gap: 12px; margin-top: 18px; flex-wrap: wrap; }
+
+  /* ── WEATHER PANEL ──────────────────────────────────────────────── */
+  .weather-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-top: 18px;
+  }
+  @media(max-width:600px){ .weather-row{ grid-template-columns: 1fr 1fr; } }
+
+  .w-stat {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 14px 16px;
+  }
+  .w-stat-label { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+  .w-stat-value { font-size: 22px; font-weight: 500; color: var(--text); margin-top: 4px; }
+  .w-stat-unit  { font-size: 10px; color: var(--muted); }
+
+  .autofill-hint {
+    font-size: 11px;
+    color: var(--amber);
+    margin-top: 14px;
+    border-left: 2px solid var(--amber);
+    padding-left: 10px;
+    display: none;
+  }
+
+  /* ── RESULT PANEL ───────────────────────────────────────────────── */
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 28px 26px;
+    margin-bottom: 20px;
+    display: none;
+  }
+  .result-crop {
+    font-family: var(--font-display);
+    font-size: 52px;
+    font-weight: 600;
+    letter-spacing: -1px;
+    color: var(--green);
+    text-transform: capitalize;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .result-sub {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 22px;
+  }
+
+  .confidence-bar-wrap { margin-bottom: 24px; }
+  .conf-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .conf-track {
+    height: 6px;
+    background: var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .conf-fill {
+    height: 100%;
+    background: var(--green);
+    width: 0%;
+    transition: width 1s cubic-bezier(.4,0,.2,1);
+  }
+  .conf-pct { font-size: 28px; font-weight: 500; color: var(--text); margin-top: 6px; }
+
+  /* ── TOP 3 ───────────────────────────────────────────────────────── */
+  .top3-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  @media(max-width:500px){ .top3-grid{ grid-template-columns: 1fr; } }
+
+  .top3-item {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 14px 16px;
+    position: relative;
+  }
+  .top3-rank {
+    font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 6px;
+  }
+  .top3-name { font-size: 16px; font-weight: 500; text-transform: capitalize; color: var(--text); margin-bottom: 6px; }
+  .top3-prob { font-size: 13px; color: var(--green); }
+
+  .top3-bar {
+    height: 2px;
+    background: var(--border);
+    margin-top: 10px;
+    overflow: hidden;
+  }
+  .top3-bar-fill {
+    height: 100%;
+    background: var(--green);
+    width: 0%;
+    transition: width 1.2s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* ── STATUS LOG ─────────────────────────────────────────────────── */
+  .log-line {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 10px;
+    padding-left: 10px;
+    border-left: 2px solid var(--border);
+  }
+  .log-line.ok   { color: var(--green); border-color: var(--green); }
+  .log-line.err  { color: #f85149;      border-color: #f85149; }
+  .log-line.warn { color: var(--amber); border-color: var(--amber); }
+
+  /* ── FOOTER ─────────────────────────────────────────────────────── */
+  footer {
+    border-top: 1px solid var(--border);
+    margin-top: 40px;
+    padding-top: 18px;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* ── SPINNER ────────────────────────────────────────────────────── */
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid var(--border);
+    border-top-color: var(--green);
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+    display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">Agro<span>Mind</span> AI</div>
+    <div class="badge">Crop Intelligence Dashboard</div>
+  </header>
+
+  <!-- MAIN GRID: inputs + weather side by side -->
+  <div class="grid-main">
+
+    <!-- LEFT: Soil Input -->
+    <div class="card">
+      <div class="card-title">Soil Nutrients</div>
+      <div class="field-grid">
+        <div>
+          <label>Nitrogen (N) kg/ha</label>
+          <input type="number" id="N" min="0" max="140" value="50"/>
+        </div>
+        <div>
+          <label>Phosphorus (P) kg/ha</label>
+          <input type="number" id="P" min="5" max="145" value="50"/>
+        </div>
+        <div>
+          <label>Potassium (K) kg/ha</label>
+          <input type="number" id="K" min="5" max="205" value="50"/>
+        </div>
+      </div>
+
+      <div class="card-title" style="margin-top:18px;">Climate Parameters</div>
+      <div class="field-grid-2">
+        <div>
+          <label>Temperature (C)  &mdash; <span class="range-val" id="tempVal">25.0</span></label>
+          <input type="range" id="temperature" min="8" max="44" step="0.1" value="25"
+                 oninput="document.getElementById('tempVal').textContent=parseFloat(this.value).toFixed(1)"/>
+        </div>
+        <div>
+          <label>Humidity (%)  &mdash; <span class="range-val" id="humVal">70.0</span></label>
+          <input type="range" id="humidity" min="14" max="100" step="0.1" value="70"
+                 oninput="document.getElementById('humVal').textContent=parseFloat(this.value).toFixed(1)"/>
+        </div>
+        <div>
+          <label>Soil pH  &mdash; <span class="range-val" id="phVal">6.5</span></label>
+          <input type="range" id="ph" min="3.5" max="10" step="0.1" value="6.5"
+                 oninput="document.getElementById('phVal').textContent=parseFloat(this.value).toFixed(1)"/>
+        </div>
+        <div>
+          <label>Rainfall (mm)  &mdash; <span class="range-val" id="rainVal">100.0</span></label>
+          <input type="range" id="rainfall" min="20" max="300" step="0.5" value="100"
+                 oninput="document.getElementById('rainVal').textContent=parseFloat(this.value).toFixed(1)"/>
+        </div>
+      </div>
+
+      <div id="autofillHint" class="autofill-hint">
+        Weather data fetched. Click "Use Live Weather" to autofill temperature, humidity and rainfall.
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="runPrediction()">
+          <span class="spinner" id="predSpinner"></span>
+          Run Prediction
+        </button>
+        <button class="btn btn-secondary" onclick="autofillWeather()" id="autofillBtn" style="display:none;">
+          Use Live Weather
+        </button>
+      </div>
+    </div>
+
+    <!-- RIGHT: Live Weather -->
+    <div class="card">
+      <div class="card-title">Live Weather Feed</div>
+      <div style="display:flex; gap:10px; align-items:flex-end;">
+        <div style="flex:1;">
+          <label>City Name</label>
+          <input type="text" id="city" placeholder="e.g. Pune"/>
+        </div>
+        <button class="btn btn-secondary" style="margin-bottom:0; height:38px;"
+                onclick="fetchWeather()">
+          <span class="spinner" id="weatherSpinner"></span>
+          Fetch
+        </button>
+      </div>
+
+      <div id="weatherResult" style="display:none;">
+        <div class="weather-row">
+          <div class="w-stat">
+            <div class="w-stat-label">Temperature</div>
+            <div class="w-stat-value" id="wTemp">--</div>
+            <div class="w-stat-unit">Celsius</div>
+          </div>
+          <div class="w-stat">
+            <div class="w-stat-label">Humidity</div>
+            <div class="w-stat-value" id="wHum">--</div>
+            <div class="w-stat-unit">Percent</div>
+          </div>
+          <div class="w-stat">
+            <div class="w-stat-label">Rainfall</div>
+            <div class="w-stat-value" id="wRain">--</div>
+            <div class="w-stat-unit">mm / hr</div>
+          </div>
+          <div class="w-stat">
+            <div class="w-stat-label">Wind</div>
+            <div class="w-stat-value" id="wWind">--</div>
+            <div class="w-stat-unit">m/s</div>
+          </div>
+        </div>
+        <div style="margin-top:14px;">
+          <div style="font-size:11px; color:var(--muted); letter-spacing:1px; text-transform:uppercase;">Condition</div>
+          <div id="wDesc" style="font-size:15px; margin-top:4px; color:var(--text);"></div>
+          <div id="wCity" style="font-size:10px; color:var(--muted); margin-top:2px;"></div>
+        </div>
+      </div>
+
+      <div id="weatherLog" class="log-line" style="margin-top:18px; display:none;"></div>
+
+      <div style="margin-top: auto; padding-top: 24px; border-top: 1px solid var(--border); margin-top:28px;">
+        <div style="font-size:10px; color:var(--muted); letter-spacing:1px; line-height:1.8;">
+          WEATHER SOURCE &mdash; OpenWeatherMap API<br/>
+          Live data syncs temperature, humidity and rainfall into the model inputs automatically.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULT PANEL -->
+  <div class="result-card" id="resultCard">
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:32px; align-items:start; flex-wrap:wrap;">
+      <div>
+        <div style="font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:10px;">Recommended Crop</div>
+        <div class="result-crop" id="cropName">--</div>
+        <div class="result-sub">Primary Recommendation</div>
+
+        <div class="confidence-bar-wrap">
+          <div class="conf-label">Model Confidence</div>
+          <div class="conf-track"><div class="conf-fill" id="confBar"></div></div>
+          <div class="conf-pct"><span id="confPct">0</span>%</div>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:14px;">Top 3 Predictions</div>
+        <div class="top3-grid" id="top3Grid"></div>
+
+        <div id="predLog" class="log-line ok" style="margin-top:18px;">
+          Prediction complete. Random Forest Classifier.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <span>AgroMind AI &mdash; Random Forest Classifier</span>
+    <span>Dataset: UCI Crop Recommendation &mdash; 22 Crop Classes</span>
+  </footer>
+</div>
+
+<script>
+  let liveWeather = null;
+
+  // ── Fetch Weather ─────────────────────────────────────────────────
+  async function fetchWeather() {
+    const city = document.getElementById('city').value.trim();
+    if (!city) { showWeatherLog('Enter a city name.', 'warn'); return; }
+
+    const sp = document.getElementById('weatherSpinner');
+    sp.style.display = 'inline-block';
+    hideWeatherLog();
+
+    try {
+      const res = await fetch('/weather', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({city})
+      });
+      const d = await res.json();
+      sp.style.display = 'none';
+
+      if (d.error) { showWeatherLog(d.error, 'err'); return; }
+
+      liveWeather = d;
+      document.getElementById('wTemp').textContent  = d.temp;
+      document.getElementById('wHum').textContent   = d.humidity;
+      document.getElementById('wRain').textContent  = d.rainfall;
+      document.getElementById('wWind').textContent  = d.wind_speed;
+      document.getElementById('wDesc').textContent  = d.description;
+      document.getElementById('wCity').textContent  = d.city + ', ' + d.country;
+      document.getElementById('weatherResult').style.display = 'block';
+      document.getElementById('autofillBtn').style.display   = 'inline-block';
+      document.getElementById('autofillHint').style.display  = 'block';
+      showWeatherLog('Live data loaded for ' + d.city + '.', 'ok');
+    } catch(e) {
+      sp.style.display = 'none';
+      showWeatherLog('Network error: ' + e.message, 'err');
+    }
+  }
+
+  // ── Autofill sliders from weather ─────────────────────────────────
+  function autofillWeather() {
+    if (!liveWeather) return;
+
+    setSlider('temperature', liveWeather.temp,     'tempVal');
+    setSlider('humidity',    liveWeather.humidity,  'humVal');
+    if (liveWeather.rainfall > 0)
+      setSlider('rainfall',  liveWeather.rainfall,  'rainVal');
+
+    document.getElementById('autofillHint').style.display = 'none';
+  }
+
+  function setSlider(id, val, labelId) {
+    const el = document.getElementById(id);
+    el.value = val;
+    document.getElementById(labelId).textContent = parseFloat(val).toFixed(1);
+  }
+
+  // ── Run Prediction ────────────────────────────────────────────────
+  async function runPrediction() {
+    const sp = document.getElementById('predSpinner');
+    sp.style.display = 'inline-block';
+
+    const payload = {
+      N:           document.getElementById('N').value,
+      P:           document.getElementById('P').value,
+      K:           document.getElementById('K').value,
+      temperature: document.getElementById('temperature').value,
+      humidity:    document.getElementById('humidity').value,
+      ph:          document.getElementById('ph').value,
+      rainfall:    document.getElementById('rainfall').value,
+    };
+
+    try {
+      const res = await fetch('/predict', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const d = await res.json();
+      sp.style.display = 'none';
+
+      if (d.error) { alert('Prediction error: ' + d.error); return; }
+
+      showResult(d);
+    } catch(e) {
+      sp.style.display = 'none';
+      alert('Network error: ' + e.message);
+    }
+  }
+
+  // ── Show Result ───────────────────────────────────────────────────
+  function showResult(d) {
+    document.getElementById('resultCard').style.display = 'block';
+    document.getElementById('cropName').textContent     = d.crop;
+
+    // Animate confidence bar
+    setTimeout(() => {
+      document.getElementById('confBar').style.width = d.confidence + '%';
+      animateNumber('confPct', 0, d.confidence, 900);
+    }, 100);
+
+    // Top 3
+    const grid = document.getElementById('top3Grid');
+    grid.innerHTML = '';
+    d.top3.forEach((item, i) => {
+      const el = document.createElement('div');
+      el.className = 'top3-item';
+      el.innerHTML = `
+        <div class="top3-rank">Rank ${i+1}</div>
+        <div class="top3-name">${item.crop}</div>
+        <div class="top3-prob">${item.prob}%</div>
+        <div class="top3-bar"><div class="top3-bar-fill" id="bar${i}"></div></div>
+      `;
+      grid.appendChild(el);
+      setTimeout(() => {
+        document.getElementById('bar'+i).style.width = item.prob + '%';
+      }, 200 + i * 150);
+    });
+
+    document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────
+  function animateNumber(id, from, to, dur) {
+    const el  = document.getElementById(id);
+    const start = performance.now();
+    function step(now) {
+      const t = Math.min((now - start) / dur, 1);
+      el.textContent = (from + (to - from) * easeOut(t)).toFixed(1);
+      if (t < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+  function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+
+  function showWeatherLog(msg, type) {
+    const el = document.getElementById('weatherLog');
+    el.textContent = msg;
+    el.className   = 'log-line ' + type;
+    el.style.display = 'block';
+  }
+  function hideWeatherLog() {
+    document.getElementById('weatherLog').style.display = 'none';
+  }
+
+  // Enter key on city input
+  document.getElementById('city').addEventListener('keydown', e => {
+    if (e.key === 'Enter') fetchWeather();
+  });
+</script>
+</body>
+</html>
